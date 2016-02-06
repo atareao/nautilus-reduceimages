@@ -35,7 +35,7 @@ from gi.repository import Nautilus as FileManager
 
 EXTENSIONS_FROM = ['.mp3','.wav','.ogg']
 SEPARATOR = u'\u2015' * 10
-NUM_THREADS = 10
+NUM_THREADS = 4
 
 _ = str
 
