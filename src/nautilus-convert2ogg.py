@@ -125,9 +125,10 @@ class Worker(GObject.GObject,threading.Thread):
 				break
 			try:
 				convert2ogg(file_in)
+				self.emit('converted',file_in)
 			except Exception as e:
 				print(e)
-			self.emit('converted',imgUrl)
+				self.emit('not converted',file_in)			
 			self.cua.task_done()
 
 class Progreso(Gtk.Dialog):
