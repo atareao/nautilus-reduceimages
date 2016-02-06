@@ -1,10 +1,10 @@
-nautilus-convert2ogg (0.0.2.1-1ubuntu5) wily; urgency=medium
+nautilus-convert2ogg (0.0.2.1-1ubuntu6) wily; urgency=medium
 
   * Changed audio parameters to optimize the size of the converted file
   * Improved multitasking
   * Fixed some bugs
 
- -- Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>  Sat, 06 Feb 2016 08:46:41 +0100
+ -- Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>  Sat, 06 Feb 2016 11:15:46 +0100
 
 nautilus-convert2ogg (0.0.2.0-1ubuntu0) vivid; urgency=medium
 

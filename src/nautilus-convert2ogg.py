@@ -27,6 +27,7 @@ import shlex
 import threading
 import tempfile
 import shutil
+from Queue import Queue
 from urllib import unquote_plus
 from gi.repository import GObject
 from gi.repository import Gtk
@@ -82,8 +83,8 @@ class Manager(GObject.GObject):
 		if total>0:
 			print(self.files)
 			workers = []
-			print(1)
-			cua = queue.Queue(maxsize=total+1)
+			print('1.- Starting process creating workers')
+			cua = Queue(maxsize=total+1)
 			progreso = Progreso('Converting files...',None,total)
 			total_workers = total if NUM_THREADS > total else NUM_THREADS
 			for i in range(total_workers):
@@ -91,21 +92,19 @@ class Manager(GObject.GObject):
 				worker.connect('converted',progreso.increase)
 				worker.start()
 				workers.append(worker)
-			print(2)
+			print('2.- Puting task in the queue')
 			for afile in self.files:
 				cua.put(afile)
-			# block until all tasks are done
-			print(3)
+			print('3.- Block until all tasks are done')
 			cua.join()
-			# stop workers
-			print(4)
+			print('4.- Stopping workers')
 			for i in range(total_workers):
 				cua.put(None)
 			for worker in workers:
 				worker.join()
 				while Gtk.events_pending():
 					Gtk.main_iteration()				
-			print(5)
+			print('5.- The End')
 
 
 class Worker(GObject.GObject,threading.Thread):
