@@ -1,0 +1,18 @@
+nautilus-convert2ogg (0.0.2.1-1ubuntu3) wily; urgency=medium
+
+  * Changed audio parameters to optimize the size of the converted file
+  * Improved multitasking
+
+ -- Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>  Fri, 05 Feb 2016 20:21:51 +0100
+
+nautilus-convert2ogg (0.0.2.0-1ubuntu0) vivid; urgency=medium
+
+  * Remove original file on converted
+
+ -- Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>  Sun, 01 Nov 2015 09:28:21 +0100
+
+nautilus-convert2ogg (0.0.1.0-1ubuntu0) vivid; urgency=low
+
+  * First release
+
+ -- Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>  Sun, 01 Nov 2015 09:08:31 +0100
