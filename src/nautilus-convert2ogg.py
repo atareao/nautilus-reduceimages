@@ -61,8 +61,8 @@ def convert2ogg(file_in):
 	if os.path.exists(file_out):
 		os.remove(file_out)
 	shutil.copyfile(tmp_file_out, file_out)
-	if os.path.exists(file_in):
-		os.remove(file_in)
+	if os.path.exists(tmp_file_out):
+		os.remove(tmp_file_out)
 	
 def get_files(files_in):
 	files = []
