@@ -80,7 +80,7 @@ class Manager(GObject.GObject):
 	def process(self):
 		total = len(self.files)
 		if total>0:
-			print(self,files)
+			print(self.files)
 			workers = []
 			print(1)
 			cua = queue.Queue(maxsize=total+1)
@@ -92,7 +92,7 @@ class Manager(GObject.GObject):
 				worker.start()
 				workers.append(worker)
 			print(2)
-			for afile in files:
+			for afile in self.files:
 				cua.put(afile)
 			# block until all tasks are done
 			print(3)
