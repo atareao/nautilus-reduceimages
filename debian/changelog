@@ -1,10 +1,10 @@
-nautilus-convert2ogg (0.0.2.2-1ubuntu1) wily; urgency=medium
+nautilus-convert2ogg (0.0.2.2-1ubuntu2) wily; urgency=medium
 
   * Number of threads reduced to 4
   * Remove temporaly file
   * Don't remove original file
 
- -- Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>  Sat, 06 Feb 2016 13:52:30 +0100
+ -- Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>  Sun, 07 Feb 2016 11:02:56 +0100
 
 nautilus-convert2ogg (0.0.2.1-1ubuntu7) wily; urgency=medium
 

@@ -31,6 +31,7 @@ from Queue import Queue
 from urllib import unquote_plus
 from gi.repository import GObject
 from gi.repository import Gtk
+from gi.repository import GLib
 from gi.repository import Nautilus as FileManager
 
 EXTENSIONS_FROM = ['.mp3','.wav','.ogg']
@@ -77,7 +78,7 @@ def get_files(files_in):
 class Manager(GObject.GObject):
 	def __init__(self,files):
 		self.files = files
-		
+	
 	def process(self):
 		total = len(self.files)
 		if total>0:
@@ -89,7 +90,7 @@ class Manager(GObject.GObject):
 			total_workers = total if NUM_THREADS > total else NUM_THREADS
 			for i in range(total_workers):
 				worker = Worker(cua)
-				worker.connect('converted',progreso.increase)
+				worker.connect('converted',GLib.idle_add, progreso.increase)
 				worker.start()
 				workers.append(worker)
 			print('2.- Puting task in the queue')
@@ -124,11 +125,10 @@ class Worker(GObject.GObject,threading.Thread):
 			if file_in is None:
 				break
 			try:
-				convert2ogg(file_in)
-				self.emit('converted',file_in)
+				convert2ogg(file_in)				
 			except Exception as e:
 				print(e)
-				self.emit('not converted',file_in)			
+			self.emit('converted',file_in)
 			self.cua.task_done()
 
 class Progreso(Gtk.Dialog):
@@ -151,40 +151,17 @@ class Progreso(Gtk.Dialog):
 		#
 		self.max_value=max_value
 		self.value=0.0
-		self.map()
-		while Gtk.events_pending():
-			Gtk.main_iteration()
 
-
-	def set_value(self,value):
-		if value >=0 and value<=self.max_value:
-			self.value = value
-			fraction=self.value/self.max_value
-			self.progressbar.set_fraction(fraction)
-			self.map()
-			while Gtk.events_pending():
-				Gtk.main_iteration()
-			if self.value==self.max_value:
-				self.hide()		
 	def close(self,widget=None):
 		self.destroy()
 
-	def increase(self,w,a):
+	def increase(self):
 		self.value+=1.0
 		fraction=self.value/self.max_value
 		self.progressbar.set_fraction(fraction)
-		while Gtk.events_pending():
-			Gtk.main_iteration()
 		if self.value==self.max_value:
 			self.hide()
-
-	def decrease(self):
-		self.value-=1.0
-		fraction=self.value/self.max_value
-		self.progressbar.set_fraction(fraction)
-		self.map()
-		while Gtk.events_pending():
-			Gtk.main_iteration()
+		return False
 
 """
 Tools to manipulate sounds
