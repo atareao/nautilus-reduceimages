@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# This file is part of nautilus-convert2ogg
+# This file is part of nautilus-pngcompress
 #
-# Copyright (C) 2012-2016 Lorenzo Carbonell
+# Copyright (C) 2016-2017 Lorenzo Carbonell
 # lorenzo.carbonell.cerezo@gmail.com
 #
 # This program is free software: you can redistribute it and/or modify
@@ -31,8 +31,6 @@ except Exception as e:
 import os
 import subprocess
 import shlex
-import tempfile
-import shutil
 from threading import Thread
 from urllib import unquote_plus
 from gi.repository import GObject
@@ -41,7 +39,6 @@ from gi.repository import GLib
 from gi.repository import Nautilus as FileManager
 
 
-EXTENSIONS_FROM = ['.mp3', '.wav', '.mp4', '.flv']
 SEPARATOR = u'\u2015' * 10
 
 _ = str
@@ -61,49 +58,68 @@ class IdleObject(GObject.GObject):
 
 class DoItInBackground(IdleObject, Thread):
     __gsignals__ = {
-        'started': (GObject.SIGNAL_RUN_FIRST, GObject.TYPE_NONE, ()),
+        'started': (GObject.SIGNAL_RUN_FIRST, GObject.TYPE_NONE, (int,)),
         'ended': (GObject.SIGNAL_RUN_FIRST, GObject.TYPE_NONE, (bool,)),
-        'done_one': (GObject.SIGNAL_RUN_FIRST, GObject.TYPE_NONE, ()),
+        'start_one': (GObject.SIGNAL_RUN_FIRST, GObject.TYPE_NONE, (str,)),
+        'end_one': (GObject.SIGNAL_RUN_FIRST, GObject.TYPE_NONE, (int,)),
     }
 
-    def __init__(self, what_to_do, elements):
+    def __init__(self, elements):
         IdleObject.__init__(self)
         Thread.__init__(self)
-        self.what_to_do = what_to_do
         self.elements = elements
         self.stopit = False
         self.ok = True
         self.daemon = True
+        self.process = None
 
     def stop(self, *args):
         self.stopit = True
 
+    def compress_file(self, file_in):
+        rutine = 'pngnp -f -e "-reduced.png" -n 256 "%s"' % (file_in)
+        args = shlex.split(rutine)
+        self.process = subprocess.Popen(args, stdout=subprocess.PIPE)
+        out, err = self.process.communicate()
+
     def run(self):
-        self.emit('started')
+        total = 0
+        for element in self.elements:
+            total += os.path.getsize(element)
+        self.emit('started', total)
         try:
             for element in self.elements:
+                print(element)
                 if self.stopit is True:
                     self.ok = False
                     break
-                self.what_to_do(element)
-                self.emit('done_one')
+                self.emit('start_one', element)
+                self.compress_file(element)
+                self.emit('end_one', os.path.getsize(element))
         except Exception as e:
             self.ok = False
+        try:
+            if self.process is not None:
+                self.process.terminate()
+                self.process = None
+        except Exception as e:
+            print(e)
         self.emit('ended', self.ok)
 
 
-class Progreso(Gtk.Dialog):
+class Progreso(Gtk.Dialog, IdleObject):
     __gsignals__ = {
         'i-want-stop': (GObject.SIGNAL_RUN_FIRST, GObject.TYPE_NONE, ()),
     }
 
     def __init__(self, title, parent, max_value):
         Gtk.Dialog.__init__(self, title, parent)
+        IdleObject.__init__(self)
         self.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
         self.set_size_request(330, 30)
         self.set_resizable(False)
         self.connect('destroy', self.close)
-        # self.set_modal(True)
+        self.set_modal(True)
         vbox = Gtk.VBox(spacing=5)
         vbox.set_border_width(5)
         self.get_content_area().add(vbox)
@@ -141,6 +157,9 @@ class Progreso(Gtk.Dialog):
         self.max_value = max_value
         self.value = 0.0
 
+    def set_max_value(self, anobject, max_value):
+        self.max_value = float(max_value)
+
     def get_stop(self):
         return self.stop
 
@@ -151,41 +170,15 @@ class Progreso(Gtk.Dialog):
     def close(self, *args):
         self.destroy()
 
-    def increase(self, anobject, command, *args):
-        self.label.set_text(_('Executing: %s') % command)
-        self.value += 1.0
+    def set_element(self, anobject, element):
+        self.label.set_text(_('Compress: %s') % element)
+
+    def increase(self, anobject, value):
+        self.value += float(value)
         fraction = self.value/self.max_value
         self.progressbar.set_fraction(fraction)
         if self.value == self.max_value:
             self.hide()
-
-
-def get_output_filename(file_in):
-    head, tail = os.path.split(file_in)
-    root, ext = os.path.splitext(tail)
-    file_out = os.path.join(head, root+'.ogg')
-    return file_out
-
-
-def convert2ogg(file_in):
-    tmp_file_out = tempfile.NamedTemporaryFile(
-        prefix='tmp_convert2ogg_file_', dir='/tmp/').name
-    tmp_file_out += '.ogg'
-    rutine = 'ffmpeg -i "%s" \
-    -acodec libvorbis \
-    -ac 2 \
-    -b:a 64k \
-    -ar 22000 \
-    "%s"' % (file_in, tmp_file_out)
-    args = shlex.split(rutine)
-    p = subprocess.Popen(args, stdout=subprocess.PIPE)
-    out, err = p.communicate()
-    file_out = get_output_filename(file_in)
-    if os.path.exists(file_out):
-        os.remove(file_out)
-    shutil.copyfile(tmp_file_out, file_out)
-    if os.path.exists(tmp_file_out):
-        os.remove(tmp_file_out)
 
 
 def get_files(files_in):
@@ -198,7 +191,7 @@ def get_files(files_in):
     return files
 
 
-class OGGConvereterMenuProvider(GObject.GObject, FileManager.MenuProvider):
+class CompressPNGFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
     """
     Implements the 'Replace in Filenames' extension to the File Manager\
     right-click menu
@@ -211,22 +204,27 @@ class OGGConvereterMenuProvider(GObject.GObject, FileManager.MenuProvider):
         """
         pass
 
-    def all_files_are_sounds(self, items):
+    def all_are_png_files(self, items):
         for item in items:
-            fileName, fileExtension = os.path.splitext(
-                unquote_plus(item.get_uri()[7:]))
-            if fileExtension.lower() in EXTENSIONS_FROM:
-                return True
-        return False
+            file_in = unquote_plus(item.get_uri()[7:])
+            if not os.path.isfile(file_in):
+                return False
+            filename, file_extension = os.path.splitext(file_in)
+            if file_extension.lower() != '.png':
+                return False
+        return True
 
-    def convert(self, menu, selected):
-        files = get_files(selected)
-        diib = DoItInBackground(convert2ogg, files)
-        progreso = Progreso(_('Convert to ogg'), None, len(files))
-        diib.connect('done_one', progreso.increase)
+    def comprespng(self, menu, selected):
+        pngfiles = get_files(selected)
+        diib = DoItInBackground(pngfiles)
+        progreso = Progreso(_('Crush file'), None, len(pngfiles))
+        diib.connect('started', progreso.set_max_value)
+        diib.connect('start_one', progreso.set_element)
+        diib.connect('end_one', progreso.increase)
         diib.connect('ended', progreso.close)
-        progreso.connect('i-want-stop', diib.stopit)
+        progreso.connect('i-want-stop', diib.stop)
         diib.start()
+        progreso.run()
 
     def get_file_items(self, window, sel_items):
         """
@@ -234,16 +232,12 @@ class OGGConvereterMenuProvider(GObject.GObject, FileManager.MenuProvider):
         right-click menu, connects its 'activate' signal to the 'run'\
         method passing the selected Directory/File
         """
-        if self.all_files_are_sounds(sel_items):
+        if self.all_are_png_files(sel_items):
             top_menuitem = FileManager.MenuItem(
-                name='OGGConverterMenuProvider::Gtk-ogg-tools',
-                label=_('Convert to ogg'),
-                tip=_('Tool to convert to ogg'))
-            top_menuitem.connect('activate', self.convert, sel_items)
+                name='CompressPNGFileMenuProvider::Gtk-compress-files',
+                label=_('Compress PNG file') + '...',
+                tip=_('Tool to compress png files by reducing colors'))
+            top_menuitem.connect('activate', self.comprespng, sel_items)
             #
             return top_menuitem,
         return
-if __name__ == '__main__':
-    print(tempfile.NamedTemporaryFile(
-        prefix='tmp_convert2ogg_file', dir='/tmp/').name)
-    print(get_output_filename('ejemplo.ext'))

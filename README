@@ -1,18 +1,18 @@
-convert2ogg
-===========
+nautilus-pngcompress
+====================
 
-convert2ogg
+nautilus-pngcompress
 
 Download
 --------
 
 Download the [package][dlp] *or* checkout the source:
 
-    $ git clone https://github.com/atareao/convert2ogg.git
+    $ git clone https://github.com/atareao/nautilus-pngcompress.git
 
 Installation
 ------------
 
     $ sudo add-apt-repositoy ppa:atareao/nautilus-extensions
     $ sudo apt-get update
-    $ sudo apt-get install convert2ogg
+    $ sudo apt-get install nautilus-pngcompress

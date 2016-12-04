@@ -1,33 +1,5 @@
-nautilus-convert2ogg (0.0.3.0-1ubuntu0) xenial; urgency=medium
-
-  * idleobject and progress dialog
-
- -- Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>  Mon, 21 Nov 2016 21:17:33 +0100
-
-nautilus-convert2ogg (0.0.2.2-1ubuntu2) wily; urgency=medium
-
-  * Number of threads reduced to 4
-  * Remove temporaly file
-  * Don't remove original file
-
- -- Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>  Sun, 07 Feb 2016 11:02:56 +0100
-
-nautilus-convert2ogg (0.0.2.1-1ubuntu7) wily; urgency=medium
-
-  * Changed audio parameters to optimize the size of the converted file
-  * Improved multitasking
-  * Fixed some bugs
-
- -- Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>  Sat, 06 Feb 2016 13:21:50 +0100
-
-nautilus-convert2ogg (0.0.2.0-1ubuntu0) vivid; urgency=medium
-
-  * Remove original file on converted
-
- -- Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>  Sun, 01 Nov 2015 09:28:21 +0100
-
-nautilus-convert2ogg (0.0.1.0-1ubuntu0) vivid; urgency=low
+nautilus-pngcompress (0.1.0-0extras16.04.1) xenial; urgency=low
 
   * First release
 
- -- Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>  Sun, 01 Nov 2015 09:08:31 +0100
+ -- Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>  Sun, 04 Dec 2016 11:21:14 +0100

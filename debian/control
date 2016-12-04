@@ -1,4 +1,4 @@
-Source: nautilus-convert2ogg
+Source: nautilus-pngcompress
 Section: utils
 Priority: extra
 Maintainer: Lorenzo Carbonell Cerezo <lorenzo.carbonell.cerezo@gmail.com>
@@ -6,7 +6,7 @@ Build-Depends: debhelper (>= 9)
 Standards-Version: 3.9.4
 Homepage: http://www.atareao.es
 
-Package: nautilus-convert2ogg
+Package: nautilus-pngcompress
 Architecture: all
 Depends: ${misc:Depends}, ${python:Depends},
 	python,
@@ -14,6 +14,6 @@ Depends: ${misc:Depends}, ${python:Depends},
 	python-cairo,
 	gir1.2-nautilus-3.0,
 	python-nautilus,
-	ffmpeg
-Description: An extension for Nautilus to convert sound files to ogg
- An extension for Nautilus to convert sound files to ogg from menu
+	pngnq
+Description: An extension to compress png files
+ An extension for Nautilus to compress png files by reducing the number of colors to only 256
