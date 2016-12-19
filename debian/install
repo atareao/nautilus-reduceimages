@@ -1,1 +1,2 @@
 src/nautilus-pngcompress.py /usr/share/nautilus-python/extensions
+data/nautilus-pngcompress.svg /usr/share/icons/gnome/scalable/apps

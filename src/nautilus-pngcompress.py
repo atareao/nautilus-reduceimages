@@ -39,7 +39,8 @@ from gi.repository import GLib
 from gi.repository import Nautilus as FileManager
 
 
-SEPARATOR = u'\u2015' * 10
+APP = '$APP$'
+VERSION = '$VERSION$'
 
 _ = str
 
@@ -77,10 +78,13 @@ class DoItInBackground(IdleObject, Thread):
         self.stopit = True
 
     def compress_file(self, file_in):
-        rutine = 'pngnp -f -e "-reduced.png" -n 256 "%s"' % (file_in)
+        rutine = 'pngnq -f -e "-reduced.png" -n 256 "%s"' % (file_in)
+        print(rutine)
         args = shlex.split(rutine)
         self.process = subprocess.Popen(args, stdout=subprocess.PIPE)
+        print(self.process)
         out, err = self.process.communicate()
+        print(out, err)
 
     def run(self):
         total = 0
@@ -214,10 +218,10 @@ class CompressPNGFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
                 return False
         return True
 
-    def comprespng(self, menu, selected):
+    def comprespng(self, menu, selected, window):
         pngfiles = get_files(selected)
         diib = DoItInBackground(pngfiles)
-        progreso = Progreso(_('Crush file'), None, len(pngfiles))
+        progreso = Progreso(_('Compress PNG file'), window, len(pngfiles))
         diib.connect('started', progreso.set_max_value)
         diib.connect('start_one', progreso.set_element)
         diib.connect('end_one', progreso.increase)
@@ -234,10 +238,58 @@ class CompressPNGFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
         """
         if self.all_are_png_files(sel_items):
             top_menuitem = FileManager.MenuItem(
-                name='CompressPNGFileMenuProvider::Gtk-compress-files',
-                label=_('Compress PNG file') + '...',
+                name='CompressPNGFileMenuProvider::Gtk-compresspng-top',
+                label=_('Compress PNG files') + '...',
                 tip=_('Tool to compress png files by reducing colors'))
-            top_menuitem.connect('activate', self.comprespng, sel_items)
-            #
+            submenu = FileManager.Menu()
+            top_menuitem.set_submenu(submenu)
+
+            sub_menuitem_00 = FileManager.MenuItem(
+                name='CompressPNGFileMenuProvider::Gtk-compresspng-sub-00',
+                label=_('Compress PNG files'),
+                tip=_('Tool to compress png files by reducing colors'))
+            sub_menuitem_00.connect('activate',
+                                    self.comprespng,
+                                    sel_items,
+                                    window)
+            submenu.append_item(sub_menuitem_00)
+
+            sub_menuitem_01 = FileManager.MenuItem(
+                name='CompressPNGFileMenuProvider::Gtk-compresspng-sub-01',
+                label=_('About'),
+                tip=_('About'))
+            sub_menuitem_01.connect('activate', self.about, window)
+            submenu.append_item(sub_menuitem_01)
+
             return top_menuitem,
         return
+
+    def about(self, widget, window):
+        ad = Gtk.AboutDialog(parent=window)
+        ad.set_name(APP)
+        ad.set_version(VERSION)
+        ad.set_copyright('Copyrignt (c) 2016\nLorenzo Carbonell')
+        ad.set_comments(APP)
+        ad.set_license('''
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <http://www.gnu.org/licenses/>.
+''')
+        ad.set_website('http://www.atareao.es')
+        ad.set_website_label('http://www.atareao.es')
+        ad.set_authors([
+            'Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>'])
+        ad.set_documenters([
+            'Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>'])
+        ad.set_icon_name(APP)
+        ad.set_logo_icon_name(APP)
+        ad.run()
+        ad.destroy()
