@@ -1,16 +1,4 @@
-nautilus-pngcompress (0.3.0-0extras16.04.2) xenial; urgency=medium
-
-  * Using pngnq
-
- -- Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>  Mon, 19 Dec 2016 18:55:46 +0100
-
-nautilus-pngcompress (0.2.0-0extras16.04.0) xenial; urgency=medium
-
-  * Modal dialog
-
- -- Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>  Tue, 06 Dec 2016 10:25:43 +0100
-
-nautilus-pngcompress (0.1.0-0extras16.04.3) xenial; urgency=low
+nautilus-jpgcompress (0.1.0-0extras16.04.0) xenial; urgency=medium
 
   * First release
 

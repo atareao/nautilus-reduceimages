@@ -1,18 +1,18 @@
-nautilus-pngcompress
+nautilus-jpgcompress
 ====================
 
-nautilus-pngcompress
+nautilus-jpgcompress
 
 Download
 --------
 
 Download the [package][dlp] *or* checkout the source:
 
-    $ git clone https://github.com/atareao/nautilus-pngcompress.git
+    $ git clone https://github.com/atareao/nautilus-jpgcompress.git
 
 Installation
 ------------
 
     $ sudo add-apt-repositoy ppa:atareao/nautilus-extensions
     $ sudo apt-get update
-    $ sudo apt-get install nautilus-pngcompress
+    $ sudo apt-get install nautilus-jpgcompress

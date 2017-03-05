@@ -1,9 +1,9 @@
 Format: http://dep.debian.net/deps/dep5
-Upstream-Name: nautilus-pngcompress
+Upstream-Name: nautilus-jpgcompress
 Source: http://www.atareao.es
 
 Files: *
-Copyright: 2015 Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>
+Copyright: 2017 Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>
 License: GPL-3.0+
 
 License: GPL-3.0+

@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# This file is part of nautilus-pngcompress
+# This file is part of nautilus-jpgcompress
 #
-# Copyright (C) 2016-2017 Lorenzo Carbonell
+# Copyright (C) 2017 Lorenzo Carbonell
 # lorenzo.carbonell.cerezo@gmail.com
 #
 # This program is free software: you can redistribute it and/or modify
@@ -78,11 +78,9 @@ class DoItInBackground(IdleObject, Thread):
         self.stopit = True
 
     def compress_file(self, file_in):
-        rutine = 'pngnq -f -e "-reduced.png" -n 256 "%s"' % (file_in)
-        print(rutine)
+        rutine = 'jpegoptim -m75 -s "%s"' % (file_in)
         args = shlex.split(rutine)
         self.process = subprocess.Popen(args, stdout=subprocess.PIPE)
-        print(self.process)
         out, err = self.process.communicate()
         print(out, err)
 
@@ -195,7 +193,7 @@ def get_files(files_in):
     return files
 
 
-class CompressPNGFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
+class CompressJPGFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
     """
     Implements the 'Replace in Filenames' extension to the File Manager\
     right-click menu
@@ -221,7 +219,7 @@ class CompressPNGFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
     def comprespng(self, menu, selected, window):
         pngfiles = get_files(selected)
         diib = DoItInBackground(pngfiles)
-        progreso = Progreso(_('Compress PNG file'), window, len(pngfiles))
+        progreso = Progreso(_('Compress JPEG file'), window, len(pngfiles))
         diib.connect('started', progreso.set_max_value)
         diib.connect('start_one', progreso.set_element)
         diib.connect('end_one', progreso.increase)
@@ -238,14 +236,14 @@ class CompressPNGFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
         """
         if self.all_are_png_files(sel_items):
             top_menuitem = FileManager.MenuItem(
-                name='CompressPNGFileMenuProvider::Gtk-compresspng-top',
-                label=_('Compress PNG files') + '...',
-                tip=_('Tool to compress png files by reducing colors'))
+                name='CompressJPGFileMenuProvider::Gtk-compressjpeg-top',
+                label=_('Compress JPEG files') + '...',
+                tip=_('Tool to compress jpeg'))
             submenu = FileManager.Menu()
             top_menuitem.set_submenu(submenu)
 
             sub_menuitem_00 = FileManager.MenuItem(
-                name='CompressPNGFileMenuProvider::Gtk-compresspng-sub-00',
+                name='CompressJPGFileMenuProvider::Gtk-compressjpeg-sub-00',
                 label=_('Compress PNG files'),
                 tip=_('Tool to compress png files by reducing colors'))
             sub_menuitem_00.connect('activate',
@@ -255,7 +253,7 @@ class CompressPNGFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
             submenu.append_item(sub_menuitem_00)
 
             sub_menuitem_01 = FileManager.MenuItem(
-                name='CompressPNGFileMenuProvider::Gtk-compresspng-sub-01',
+                name='CompressJPGFileMenuProvider::Gtk-compressjpeg-sub-01',
                 label=_('About'),
                 tip=_('About'))
             sub_menuitem_01.connect('activate', self.about, window)
@@ -268,7 +266,7 @@ class CompressPNGFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
         ad = Gtk.AboutDialog(parent=window)
         ad.set_name(APP)
         ad.set_version(VERSION)
-        ad.set_copyright('Copyrignt (c) 2016\nLorenzo Carbonell')
+        ad.set_copyright('Copyrignt (c) 2017\nLorenzo Carbonell')
         ad.set_comments(APP)
         ad.set_license('''
 This program is free software: you can redistribute it and/or modify it under

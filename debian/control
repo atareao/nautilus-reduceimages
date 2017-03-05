@@ -1,4 +1,4 @@
-Source: nautilus-pngcompress
+Source: nautilus-jpgcompress
 Section: utils
 Priority: extra
 Maintainer: Lorenzo Carbonell Cerezo <lorenzo.carbonell.cerezo@gmail.com>
@@ -6,7 +6,7 @@ Build-Depends: debhelper (>= 9)
 Standards-Version: 3.9.4
 Homepage: http://www.atareao.es
 
-Package: nautilus-pngcompress
+Package: nautilus-jpgcompress
 Architecture: all
 Depends: ${misc:Depends}, ${python:Depends},
 	python,
@@ -14,6 +14,6 @@ Depends: ${misc:Depends}, ${python:Depends},
 	python-cairo,
 	gir1.2-nautilus-3.0,
 	python-nautilus,
-	pngnq
-Description: An extension to compress png files
- An extension for Nautilus to compress png files by reducing the number of colors to only 256
+	jpegoptim
+Description: An extension to compress/optimize jpeg files
+ An extension for Nautilus to compress and optimize jpeg files
