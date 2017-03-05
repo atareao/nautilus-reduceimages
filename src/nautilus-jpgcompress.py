@@ -37,6 +37,7 @@ from gi.repository import GObject
 from gi.repository import Gtk
 from gi.repository import GLib
 from gi.repository import Nautilus as FileManager
+import mimetypes
 
 
 APP = '$APP$'
@@ -204,15 +205,16 @@ class CompressJPGFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
         File Manager crashes if a plugin doesn't implement the __init__\
         method
         """
+        mimetypes.init()
         pass
 
-    def all_are_png_files(self, items):
+    def all_are_jpeg_files(self, items):
         for item in items:
             file_in = unquote_plus(item.get_uri()[7:])
             if not os.path.isfile(file_in):
                 return False
-            filename, file_extension = os.path.splitext(file_in)
-            if file_extension.lower() != '.png':
+            mimetype = mimetypes.guess_type('file://' + file_in)[0]
+            if mimetype != 'image/jpeg':
                 return False
         return True
 
@@ -234,7 +236,7 @@ class CompressJPGFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
         right-click menu, connects its 'activate' signal to the 'run'\
         method passing the selected Directory/File
         """
-        if self.all_are_png_files(sel_items):
+        if self.all_are_jpeg_files(sel_items):
             top_menuitem = FileManager.MenuItem(
                 name='CompressJPGFileMenuProvider::Gtk-compressjpeg-top',
                 label=_('Compress JPEG files') + '...',
@@ -244,7 +246,7 @@ class CompressJPGFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
 
             sub_menuitem_00 = FileManager.MenuItem(
                 name='CompressJPGFileMenuProvider::Gtk-compressjpeg-sub-00',
-                label=_('Compress PNG files'),
+                label=_('Compress JPEG files'),
                 tip=_('Tool to compress png files by reducing colors'))
             sub_menuitem_00.connect('activate',
                                     self.comprespng,
@@ -258,7 +260,6 @@ class CompressJPGFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
                 tip=_('About'))
             sub_menuitem_01.connect('activate', self.about, window)
             submenu.append_item(sub_menuitem_01)
-
             return top_menuitem,
         return
 
@@ -291,3 +292,10 @@ this program. If not, see <http://www.gnu.org/licenses/>.
         ad.set_logo_icon_name(APP)
         ad.run()
         ad.destroy()
+
+
+if __name__ == '__main__':
+    import mimetypes
+    mimetypes.init()
+    print(mimetypes.guess_type(
+        'file:///home/lorenzo/Escritorio/ejemplos/ejemplo01.jpg'))
