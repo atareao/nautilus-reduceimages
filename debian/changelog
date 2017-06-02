@@ -1,10 +1,4 @@
-nautilus-jpgcompress (0.1.1-0extras16.04.1) xenial; urgency=medium
-
-  * Using mimetypes
-
- -- Lorenzo Carbonell <lorenzo.carbonell.cerezo@gmail.com>  Sun, 05 Mar 2017 20:49:25 +0100
-
-nautilus-jpgcompress (0.1.0-0extras16.04.0) xenial; urgency=medium
+nautilus-locompress (0.1.0-0extras16.04.0) xenial; urgency=medium
 
   * First release
 

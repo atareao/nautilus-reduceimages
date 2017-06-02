@@ -1,18 +1,18 @@
-nautilus-jpgcompress
-====================
+nautilus-locompress
+===================
 
-nautilus-jpgcompress
+nautilus-locompress
 
 Download
 --------
 
 Download the [package][dlp] *or* checkout the source:
 
-    $ git clone https://github.com/atareao/nautilus-jpgcompress.git
+    $ git clone https://github.com/atareao/nautilus-locompress.git
 
 Installation
 ------------
 
     $ sudo add-apt-repositoy ppa:atareao/nautilus-extensions
     $ sudo apt-get update
-    $ sudo apt-get install nautilus-jpgcompress
+    $ sudo apt-get install nautilus-locompress
