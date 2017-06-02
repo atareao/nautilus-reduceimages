@@ -393,40 +393,41 @@ class CompressODTFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
         right-click menu, connects its 'activate' signal to the 'run'\
         method passing the selected Directory/File
         """
-        if self.all_are_jpeg_files(sel_items):
-            top_menuitem = FileManager.MenuItem(
-                name='CompressODTFileMenuProvider::Gtk-compressodt-top',
-                label=_('Compress ODT files') + '...',
-                tip=_('Tool to compress ODT files'))
-            submenu = FileManager.Menu()
-            top_menuitem.set_submenu(submenu)
+        top_menuitem = FileManager.MenuItem(
+            name='CompressODTFileMenuProvider::Gtk-compressodt-top',
+            label=_('Compress ODT files') + '...',
+            tip=_('Tool to compress ODT files'))
+        submenu = FileManager.Menu()
+        top_menuitem.set_submenu(submenu)
 
-            sub_menuitem_00 = FileManager.MenuItem(
-                name='CompressODTFileMenuProvider::Gtk-compressodt-sub-00',
-                label=_('Compress ODT files'),
-                tip=_('Tool to compress ODT files'))
+        sub_menuitem_00 = FileManager.MenuItem(
+            name='CompressODTFileMenuProvider::Gtk-compressodt-sub-00',
+            label=_('Compress ODT files'),
+            tip=_('Tool to compress ODT files'))
+        if self.all_are_odt_files(sel_items):
             sub_menuitem_00.connect('activate',
                                     self.compressodt,
                                     sel_items,
                                     window)
-            submenu.append_item(sub_menuitem_00)
+        else:
+            sub_menuitem_00.set_property('sensitive', False)
+        submenu.append_item(sub_menuitem_00)
 
-            sub_menuitem_01 = FileManager.MenuItem(
-                name='CompressODTFileMenuProvider::Gtk-compressodt-sub-01',
-                label=_('Configurate'),
-                tip=_('Configurate tool to compress ODT files'))
-            sub_menuitem_01.connect('activate', self.config, window)
-            submenu.append_item(sub_menuitem_01)
+        sub_menuitem_01 = FileManager.MenuItem(
+            name='CompressODTFileMenuProvider::Gtk-compressodt-sub-01',
+            label=_('Configurate'),
+            tip=_('Configurate tool to compress ODT files'))
+        sub_menuitem_01.connect('activate', self.config, window)
+        submenu.append_item(sub_menuitem_01)
 
-            sub_menuitem_02 = FileManager.MenuItem(
-                name='CompressODTFileMenuProvider::Gtk-compressodt-sub-02',
-                label=_('About'),
-                tip=_('About'))
-            sub_menuitem_02.connect('activate', self.about, window)
-            submenu.append_item(sub_menuitem_02)
+        sub_menuitem_02 = FileManager.MenuItem(
+            name='CompressODTFileMenuProvider::Gtk-compressodt-sub-02',
+            label=_('About'),
+            tip=_('About'))
+        sub_menuitem_02.connect('activate', self.about, window)
+        submenu.append_item(sub_menuitem_02)
 
-            return top_menuitem,
-        return
+        return top_menuitem,
 
     def config(self, widget, window):
         configDialog = ConfigDialog('Config LO Compress', window)
