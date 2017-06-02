@@ -369,7 +369,7 @@ class CompressODTFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
             if not os.path.isfile(file_in):
                 return False
             mimetype = mimetypes.guess_type('file://' + file_in)[0]
-            if mimetype != 'application/vnd.oasis.opendocument.text ':
+            if mimetype != 'application/vnd.oasis.opendocument.text':
                 return False
         return True
 
