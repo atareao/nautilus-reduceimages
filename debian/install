@@ -1,2 +1,2 @@
-src/nautilus-locompress.py /usr/share/nautilus-python/extensions
-data/nautilus-locompress.svg /usr/share/icons/gnome/scalable/apps
+src/nautilus-reduceimages.py /usr/share/nautilus-python/extensions
+data/nautilus-reduceimages.svg /usr/share/icons/gnome/scalable/apps

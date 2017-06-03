@@ -1,12 +1,12 @@
-Source: nautilus-locompress
+Source: nautilus-reduceimages
 Section: utils
 Priority: extra
 Maintainer: Lorenzo Carbonell Cerezo <lorenzo.carbonell.cerezo@gmail.com>
 Build-Depends: debhelper (>= 9)
-Standards-Version: 3.9.4
+Standards-Version: 3.9.5
 Homepage: http://www.atareao.es
 
-Package: nautilus-locompress
+Package: nautilus-reduceimages
 Architecture: all
 Depends: ${misc:Depends}, ${python:Depends},
 	python,
@@ -15,5 +15,5 @@ Depends: ${misc:Depends}, ${python:Depends},
 	gir1.2-nautilus-3.0,
 	python-nautilus,
 	python-pil
-Description: An extension to compress/optimize LibreOffice odt files
- An extension for Nautilus to compress and optimize LibreOffice odt files
+Description: An extension to reduce image
+ An extension for Nautilus to reduce images to share in social networks

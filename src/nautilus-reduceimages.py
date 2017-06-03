@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# This file is part of nautilus-lo-compress
+# This file is part of nautilus-reduceimages
 #
 # Copyright (C) 2017 Lorenzo Carbonell
 # lorenzo.carbonell.cerezo@gmail.com
@@ -24,6 +24,7 @@
 import gi
 try:
     gi.require_version('Gtk', '3.0')
+    gi.require_version('Gdk', '3.0')
     gi.require_version('GObject', '2.0')
     gi.require_version('GLib', '2.0')
     gi.require_version('Nautilus', '3.0')
@@ -31,15 +32,11 @@ except Exception as e:
     print(e)
     exit(-1)
 from gi.repository import Gtk
+from gi.repository import Gdk
 from gi.repository import GObject
 from gi.repository import GLib
 from gi.repository import Nautilus as FileManager
-from zipfile import ZipFile
-import zipfile
-import tempfile
 import os
-import shutil
-from xml.etree import ElementTree
 from PIL import Image
 import ConfigParser
 from threading import Thread
@@ -69,88 +66,84 @@ def get_files(files_in):
     return files
 
 
-def zipdir(path, ziph):
-    # ziph is zipfile handle
-    for root, dirs, files in os.walk(path):
-        for file in files:
-            arcname = os.path.join(os.path.relpath(root, path), file)
-            ziph.write(os.path.join(root, file), arcname)
+def rgba_to_hex(color):
+    """Return hexadecimal string for :class:`Gdk.RGBA` `color`."""
+    return '#{0:02x}{1:02x}{2:02x}'.format(int(color.red * 255),
+                                           int(color.green * 255),
+                                           int(color.blue * 255))
 
 
-def to_mm(value):
-    if value.endswith('cm'):
-        return float(value[:-2]) * 10.0
-    elif value.endswith('mm'):
-        return float(value[:-2])
-    elif value.endswith('in'):
-        return float(value[:-2]) * 25.4
+def hex_to_rgba(hex):
+    """Return Gdk.RGBA color from hex string."""
+    color = Gdk.RGBA()
+    try:
+        color.parse(hex)
+        return color
+    except Exception as e:
+        print(e)
+    color.parse('#000000')
+    return color
 
 
-def reduce_lo_file(orginalFile, dpi=300, quality=80, optimize=True):
-    filename, fileextension = os.path.splitext(orginalFile)
-    destFile = '{0}_reduced{1}'.format(filename, fileextension)
+def reduce_image(originalFile, width=1200, height=600, border_width=0,
+                 color=Gdk.RGBA(), quality=80, tojpeg=True, overwrite=True):
+    filename, fileextension = os.path.splitext(originalFile)
+    if tojpeg is True:
+        fileextension = '.jpg'
+    if overwrite is False:
+        destFile = '{0}_reduced{1}'.format(filename, fileextension)
+    else:
+        destFile = originalFile
 
-    temporalFile = tempfile.NamedTemporaryFile().name
-    if os.path.exists(temporalFile):
-        os.remove(temporalFile)
-
-    temporalDir = tempfile.mkdtemp()
-    if os.path.exists(temporalDir):
-        shutil.rmtree(temporalDir, True)
-    os.makedirs(temporalDir)
-
-    with ZipFile(orginalFile, 'r') as myzip:
-        for element in myzip.infolist():
-            myzip.extract(element, temporalDir)
-
-    ns = {'draw': 'urn:oasis:names:tc:opendocument:xmlns:drawing:1.0',
-          'svg': 'urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0'}
-    eTree = ElementTree.parse(os.path.join(temporalDir, 'content.xml'))
-    root = eTree.getroot()
-    for node in root.findall('.//draw:frame', ns):
-        width = to_mm(node.attrib['{%s}%s' % (ns['svg'], 'width')])
-        height = to_mm(node.attrib['{%s}%s' % (ns['svg'], 'height')])
-        aimage = node.find('draw:image', ns).attrib[
-            '{http://www.w3.org/1999/xlink}href']
-        afile = os.path.join(temporalDir, aimage)
-        size = (width / 25.4 * dpi, height / 25.4 * dpi)
-        im = Image.open(afile)
-        im.thumbnail(size, Image.ANTIALIAS)
-        im.save(afile, quality=quality, optimize=optimize)
-
-    with ZipFile(temporalFile, 'w', zipfile.ZIP_DEFLATED) as output:
-            zipdir(temporalDir, output)
-
-    if os.path.exists(destFile):
-        os.remove(destFile)
-
-    shutil.move(temporalFile, destFile)
-
-    if os.path.exists(temporalDir):
-        shutil.rmtree(temporalDir, True)
+    im = Image.open(originalFile)
+    or_width, or_height = im.size
+    new_width = width - 2 * border_width
+    new_height = height - 2 * border_width
+    im.thumbnail((new_width, new_height), Image.ANTIALIAS)
+    new_width, new_height = im.size
+    x = int((float(width) - float(new_width)) / 2.0)
+    y = int((float(height) - float(new_height)) / 2.0)
+    background = Image.new('RGBA', (width, height), (int(color.red * 255.0),
+                                                     int(color.green * 255.0),
+                                                     int(color.blue * 255.0),
+                                                     int(color.alpha * 255.0)))
+    background.paste(im, (x, y))
+    background.save(destFile, quality=quality, optimize=True)
 
 
 def read_config():
     config = ConfigParser.ConfigParser()
     config.read(CONFIG_FILE)
     try:
-        dpi = config.getint('Config', 'dpi')
+        width = config.getint('Config', 'width')
+        height = config.getint('Config', 'height')
+        border_width = config.getint('Config', 'border_width')
+        color = hex_to_rgba(config.get('Config', 'color'))
         quality = config.getint('Config', 'quality')
-        optimize = config.getboolean('Config', 'optimize')
-        return dpi, quality, optimize
+        tojpeg = config.getboolean('Config', 'tojpeg')
+        overwrite = config.getboolean('Config', 'overwrite')
+        return width, height, border_width, color, quality, tojpeg, overwrite
     except ConfigParser.NoSectionError as e:
         print(e)
-        write_config(300, 80, True)
-    return 300, 80, True
+        write_config()
+    except ConfigParser.NoOptionError as e:
+        print(e)
+        write_config()
+    return 1200, 600, 0, hex_to_rgba('#000000'), 80, True, True
 
 
-def write_config(dpi=300, quality=80, optimize=True):
+def write_config(width=1200, height=600, border_width=0, color='#000000',
+                 quality=80, tojpeg=True, overwrite=True):
     config = ConfigParser.ConfigParser()
     with open(CONFIG_FILE, 'w') as configfile:
         config.add_section('Config')
-        config.set('Config', 'dpi', dpi)
+        config.set('Config', 'width', width)
+        config.set('Config', 'height', height)
+        config.set('Config', 'border_width', border_width)
+        config.set('Config', 'color', color)
         config.set('Config', 'quality', quality)
-        config.set('Config', 'optimize', optimize)
+        config.set('Config', 'tojpeg', tojpeg)
+        config.set('Config', 'overwrite', overwrite)
         config.write(configfile)
 
 
@@ -253,11 +246,9 @@ class DoItInBackground(GObject.GObject, Thread):
     def stop(self, *args):
         self.stopit = True
 
-    def compress_file(self, file_in, dpi, quality, optimize):
-        reduce_lo_file(file_in, dpi, quality, optimize)
-
     def run(self):
-        dpi, quality, optimize = read_config()
+        width, height, border_width, color, quality, tojpeg,\
+            overwrite = read_config()
         total = 0
         for element in self.elements:
             total += os.path.getsize(element)
@@ -269,7 +260,8 @@ class DoItInBackground(GObject.GObject, Thread):
                     self.ok = False
                     break
                 self.emit('start_one', element)
-                self.compress_file(element, dpi, quality, optimize)
+                reduce_image(element, width, height, border_width, color,
+                             quality, tojpeg, overwrite)
                 self.emit('end_one', os.path.getsize(element))
         except Exception as e:
             self.ok = False
@@ -316,40 +308,83 @@ class ConfigDialog(Gtk.Dialog):
         grid.set_column_homogeneous(False)
         frame.add(grid)
         #
-        label = Gtk.Label('dpi' + ':')
+        label = Gtk.Label('Width' + ':')
         label.set_alignment(0.0, 0.5)
         grid.attach(label, 0, 0, 1, 1)
-        self.dpi = Gtk.HScale.new_with_range(0, 600, 50)
-        self.dpi.set_size_request(200, 0)
-        grid.attach(self.dpi, 1, 0, 1, 1)
-        label = Gtk.Label('quality' + ':')
+        self.width = Gtk.Entry()
+        self.width.set_size_request(200, 0)
+        grid.attach(self.width, 1, 0, 1, 1)
+
+        label = Gtk.Label('Height' + ':')
         label.set_alignment(0.0, 0.5)
         grid.attach(label, 0, 1, 1, 1)
-        self.quality = Gtk.HScale.new_with_range(0, 100, 1)
-        grid.attach(self.quality, 1, 1, 1, 1)
-        label = Gtk.Label('Optimize' + ':')
+        self.height = Gtk.Entry()
+        grid.attach(self.height, 1, 1, 1, 1)
+
+        label = Gtk.Label('Border width' + ':')
         label.set_alignment(0.0, 0.5)
         grid.attach(label, 0, 2, 1, 1)
-        box = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 5)
-        grid.attach(box, 1, 2, 1, 1)
-        self.optimize = Gtk.Switch()
-        box.pack_start(self.optimize, False, False, 0)
+        self.border_width = Gtk.Entry()
+        grid.attach(self.border_width, 1, 2, 1, 1)
 
-        dpi, quality, optimize = read_config()
-        self.dpi.set_value(dpi)
+        label = Gtk.Label('Background color' + ':')
+        label.set_alignment(0.0, 0.5)
+        grid.attach(label, 0, 3, 1, 1)
+        self.color = Gtk.ColorButton()
+        # self.color.connect('button-release-event', self.on_color_clicked)
+        grid.attach(self.color, 1, 3, 1, 1)
+
+        label = Gtk.Label('quality' + ':')
+        label.set_alignment(0.0, 0.5)
+        grid.attach(label, 0, 4, 1, 1)
+        self.quality = Gtk.HScale.new_with_range(0, 100, 1)
+        grid.attach(self.quality, 1, 4, 1, 1)
+
+        label = Gtk.Label('Convert to jpeg' + ':')
+        label.set_alignment(0.0, 0.5)
+        grid.attach(label, 0, 5, 1, 1)
+        box = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 5)
+        grid.attach(box, 1, 5, 1, 1)
+        self.tojpeg = Gtk.Switch()
+        box.pack_start(self.tojpeg, False, False, 0)
+
+        label = Gtk.Label('Overwrite' + ':')
+        label.set_alignment(0.0, 0.5)
+        grid.attach(label, 0, 6, 1, 1)
+        box = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 5)
+        grid.attach(box, 1, 6, 1, 1)
+        self.overwrite = Gtk.Switch()
+        box.pack_start(self.overwrite, False, False, 0)
+
+        width, height, border_width, color, quality, tojpeg,\
+            overwrite = read_config()
+        self.width.set_text(str(width))
+        self.height.set_text(str(height))
+        self.border_width.set_text(str(border_width))
+        self.color.set_rgba(color)
         self.quality.set_value(quality)
-        self.optimize.set_active(optimize)
+        self.tojpeg.set_active(tojpeg)
+        self.overwrite.set_active(overwrite)
 
         self.show_all()
 
     def save(self):
-        dpi = int(self.dpi.get_value())
+        width = int(self.width.get_text())
+        height = int(self.height.get_text())
+        border_width = int(self.border_width.get_text())
+        color = rgba_to_hex(self.color.get_rgba())
         quality = int(self.quality.get_value())
-        optimize = self.optimize.get_active()
-        write_config(dpi=dpi, quality=quality, optimize=optimize)
+        tojpeg = self.tojpeg.get_active()
+        overwrite = self.overwrite.get_active()
+        write_config(width=width, height=height, border_width=border_width,
+                     color=color, quality=quality, tojpeg=tojpeg,
+                     overwrite=overwrite)
+
+    def close(self, *args):
+        self.destroy()
 
 
-class CompressODTFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
+class ReduceImageFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
     """
     Implements the 'Replace in Filenames' extension to the File Manager\
     right-click menu
@@ -363,22 +398,22 @@ class CompressODTFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
         mimetypes.init()
         pass
 
-    def all_are_odt_files(self, items):
+    def all_are_images_files(self, items):
         for item in items:
             file_in = unquote_plus(item.get_uri()[7:])
             if not os.path.isfile(file_in):
                 return False
             mimetype = mimetypes.guess_type('file://' + file_in)[0]
-            if mimetype != 'application/vnd.oasis.opendocument.text':
+            if mimetype not in ['image/png', 'image/jpeg']:
                 return False
         return True
 
-    def compressodt(self, menu, selected, window):
-        odtfiles = get_files(selected)
-        diib = DoItInBackground(odtfiles)
-        progreso = ProgressDialog(_('Compress ODT file'),
+    def reduceimages(self, menu, selected, window):
+        images = get_files(selected)
+        diib = DoItInBackground(images)
+        progreso = ProgressDialog(_('Reduce images'),
                                   window,
-                                  len(odtfiles))
+                                  len(images))
         diib.connect('started', progreso.set_max_value)
         diib.connect('start_one', progreso.set_element)
         diib.connect('end_one', progreso.increase)
@@ -394,19 +429,19 @@ class CompressODTFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
         method passing the selected Directory/File
         """
         top_menuitem = FileManager.MenuItem(
-            name='CompressODTFileMenuProvider::Gtk-compressodt-top',
-            label=_('Compress ODT files') + '...',
-            tip=_('Tool to compress ODT files'))
+            name='ReduceImageFileMenuProvider::Gtk-reduceimage-top',
+            label=_('Reduce images') + '...',
+            tip=_('Tool to reduce images'))
         submenu = FileManager.Menu()
         top_menuitem.set_submenu(submenu)
 
         sub_menuitem_00 = FileManager.MenuItem(
-            name='CompressODTFileMenuProvider::Gtk-compressodt-sub-00',
-            label=_('Compress ODT files'),
-            tip=_('Tool to compress ODT files'))
-        if self.all_are_odt_files(sel_items):
+            name='ReduceImageFileMenuProvider::Gtk-reduceimage-sub-00',
+            label=_('Reduce image'),
+            tip=_('Tool to reduce images'))
+        if self.all_are_images_files(sel_items):
             sub_menuitem_00.connect('activate',
-                                    self.compressodt,
+                                    self.reduceimages,
                                     sel_items,
                                     window)
         else:
@@ -414,14 +449,14 @@ class CompressODTFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
         submenu.append_item(sub_menuitem_00)
 
         sub_menuitem_01 = FileManager.MenuItem(
-            name='CompressODTFileMenuProvider::Gtk-compressodt-sub-01',
+            name='ReduceImageFileMenuProvider::Gtk-reduceimage-sub-01',
             label=_('Configurate'),
-            tip=_('Configurate tool to compress ODT files'))
+            tip=_('Configurate tool to reduce_images'))
         sub_menuitem_01.connect('activate', self.config, window)
         submenu.append_item(sub_menuitem_01)
 
         sub_menuitem_02 = FileManager.MenuItem(
-            name='CompressODTFileMenuProvider::Gtk-compressodt-sub-02',
+            name='ReduceImageFileMenuProvider::Gtk-reduceimage-sub-02',
             label=_('About'),
             tip=_('About'))
         sub_menuitem_02.connect('activate', self.about, window)
@@ -430,7 +465,7 @@ class CompressODTFileMenuProvider(GObject.GObject, FileManager.MenuProvider):
         return top_menuitem,
 
     def config(self, widget, window):
-        configDialog = ConfigDialog('Config LO Compress', window)
+        configDialog = ConfigDialog('Config Reduce Image', window)
         if configDialog.run() == Gtk.ResponseType.ACCEPT:
             configDialog.hide()
             configDialog.save()
@@ -468,17 +503,35 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 if __name__ == '__main__':
-    files = ['/home/lorenzo/Escritorio/test1.odt',
-             '/home/lorenzo/Escritorio/test2.odt',
-             '/home/lorenzo/Escritorio/test3.odt',
-             '/home/lorenzo/Escritorio/test4.odt',
-             '/home/lorenzo/Escritorio/test5.odt']
-    # reduce_lo_file(orginalFile)
+    import shutil
     configDialog = ConfigDialog('test', None)
     if configDialog.run() == Gtk.ResponseType.ACCEPT:
         configDialog.hide()
         configDialog.save()
     configDialog.destroy()
+    shutil.copy('/home/lorenzo/Escritorio/nature-forest-industry-rails.jpg',
+                '/home/lorenzo/Escritorio/nature-forest-industry-rails-1.jpg')
+    shutil.copy('/home/lorenzo/Escritorio/nature-forest-industry-rails.jpg',
+                '/home/lorenzo/Escritorio/nature-forest-industry-rails-2.jpg')
+    shutil.copy('/home/lorenzo/Escritorio/nature-forest-industry-rails.jpg',
+                '/home/lorenzo/Escritorio/nature-forest-industry-rails-3.jpg')
+    shutil.copy('/home/lorenzo/Escritorio/nature-forest-industry-rails.jpg',
+                '/home/lorenzo/Escritorio/nature-forest-industry-rails-4.jpg')
+    shutil.copy('/home/lorenzo/Escritorio/nature-forest-industry-rails.jpg',
+                '/home/lorenzo/Escritorio/nature-forest-industry-rails-5.jpg')
+    files = ['/home/lorenzo/Escritorio/nature-forest-industry-rails-1.jpg',
+             '/home/lorenzo/Escritorio/nature-forest-industry-rails-2.jpg',
+             '/home/lorenzo/Escritorio/nature-forest-industry-rails-3.jpg',
+             '/home/lorenzo/Escritorio/nature-forest-industry-rails-4.jpg',
+             '/home/lorenzo/Escritorio/nature-forest-industry-rails-5.jpg']
+    # reduce_lo_file(orginalFile)
+    '''
+    configDialog = ConfigDialog('test', None)
+    if configDialog.run() == Gtk.ResponseType.ACCEPT:
+        configDialog.hide()
+        configDialog.save()
+    configDialog.destroy()
+    '''
     pd = ProgressDialog('Test', None, len(files))
     diib = DoItInBackground(files)
     diib.connect('started', pd.set_max_value)

@@ -1,18 +1,18 @@
-nautilus-locompress
-===================
+nautilus-reduceimages
+=====================
 
-nautilus-locompress
+nautilus-reduceimages
 
 Download
 --------
 
 Download the [package][dlp] *or* checkout the source:
 
-    $ git clone https://github.com/atareao/nautilus-locompress.git
+    $ git clone https://github.com/atareao/nautilus-reduceimages.git
 
 Installation
 ------------
 
     $ sudo add-apt-repositoy ppa:atareao/nautilus-extensions
     $ sudo apt-get update
-    $ sudo apt-get install nautilus-locompress
+    $ sudo apt-get install nautilus-reduceimages
