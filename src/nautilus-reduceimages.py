@@ -89,11 +89,15 @@ def reduce_image(originalFile, width=1200, height=600, border_width=0,
                  color=Gdk.RGBA(), quality=80, tojpeg=True, overwrite=True):
     filename, fileextension = os.path.splitext(originalFile)
     if tojpeg is True:
-        fileextension = '.jpg'
-    if overwrite is False:
-        destFile = '{0}_reduced{1}'.format(filename, fileextension)
+        if overwrite is False:
+            destFile = '{0}_reduced{1}'.format(filename, '.jpg')
+        else:
+            destFile = filename + '.jpg'
     else:
-        destFile = originalFile
+        if overwrite is False:
+            destFile = '{0}_reduced{1}'.format(filename, fileextension)
+        else:
+            destFile = originalFile
 
     im = Image.open(originalFile)
     or_width, or_height = im.size
